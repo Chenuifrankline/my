@@ -34,6 +34,11 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+# Do not auto add folders
+set(MX_Application_Src "" CACHE INTERNAL "")
+set(STM32_Drivers_Src "" CACHE INTERNAL "")
+
+
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -45,6 +50,9 @@ file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.cpp
 )
+
+# Exclude the auto-generated system file
+list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/system_stm32f4xx\\.c$")
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
