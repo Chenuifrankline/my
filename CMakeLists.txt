@@ -36,8 +36,6 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Do not auto add folders
 set(MX_Application_Src "" CACHE INTERNAL "")
-set(STM32_Drivers_Src "" CACHE INTERNAL "")
-
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
@@ -45,10 +43,11 @@ add_subdirectory(cmake/stm32cubemx)
 # Add LVGL source files
 add_subdirectory(Drivers/lvgl)
 
-# Gather all sources in core/src
+# Gather all sources in core/src and lvgl/src
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lvgl/src/*.c
 )
 
 # Exclude the auto-generated system file

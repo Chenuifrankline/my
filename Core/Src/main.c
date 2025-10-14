@@ -19,9 +19,17 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "lcd.h"
+#include "projdefs.h"
+#include "stm32f446xx.h"
+#include "stm32f4xx_ll_dma.h"
+#include "stm32f4xx_ll_spi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <src/misc/lv_color.h>
+#include <src/misc/lv_timer.h>
+#include <src/misc/lv_types.h>
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -44,7 +52,6 @@
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -62,13 +69,42 @@ void LVGLTimer(void *argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int __io_putchar(int ch)
-{
-  while (!LL_USART_IsActiveFlag_TXE(USART2))
-  {
+int __io_putchar(int ch) {
+  while (!LL_USART_IsActiveFlag_TXE(USART2)) {
   }
   LL_USART_TransmitData8(USART2, ch);
   return ch;
+}
+
+void LCDTask(void *args) {
+
+  lcd_init(SPI3, DMA1, LL_DMA_STREAM_5, TIM10, 100);
+  lcd_setBacklight(100);
+
+  lv_obj_t *obj;
+
+  /* set screen background to white */
+  lv_obj_t *scr = lv_screen_active();
+  lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
+  lv_obj_set_style_bg_opa(scr, LV_OPA_100, 0);
+
+  /* create label */
+  obj = lv_label_create(scr);
+  lv_obj_set_align(obj, LV_ALIGN_CENTER);
+  lv_obj_set_height(obj, LV_SIZE_CONTENT);
+  lv_obj_set_width(obj, LV_SIZE_CONTENT);
+  lv_obj_set_style_text_font(obj, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(obj, lv_color_black(), 0);
+  lv_label_set_text(obj, "MrFlix?");
+  int count = 0;
+  for (;;) {
+    char display[10];
+    snprintf(display, sizeof(display), "%d", count++);
+    lv_label_set_text(obj, display);
+
+    lv_timer_handler();
+    vTaskDelay(pdMS_TO_TICKS(20));
+  }
 }
 
 /* USER CODE END 0 */
@@ -77,8 +113,7 @@ int __io_putchar(int ch)
  * @brief  The application entry point.
  * @retval int
  */
-int main(void)
-{
+int main(void) {
 
   /* USER CODE BEGIN 1 */
 
@@ -86,7 +121,8 @@ int main(void)
 
   /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+   */
   HAL_Init();
 
   /* USER CODE BEGIN Init */
@@ -107,11 +143,10 @@ int main(void)
   MX_SPI3_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-
+  LL_SYSTICK_EnableIT();
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -128,11 +163,13 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  xTaskCreate(LVGLTimer, "LVGLTimerTask", 64, NULL, 2, NULL);
+  xTaskCreate(LCDTask, "LCDTask", 2048, NULL, 4, NULL);
+  // xTaskCreate(LVGLTimer, "LVGLTimerTask", 1024, NULL, 2, NULL);
+
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -142,8 +179,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -155,11 +191,9 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void) {
   LL_FLASH_SetLatency(LL_FLASH_LATENCY_2);
-  while (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2)
-  {
+  while (LL_FLASH_GetLatency() != LL_FLASH_LATENCY_2) {
   }
   LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE3);
   LL_PWR_DisableOverDriveMode();
@@ -167,18 +201,16 @@ void SystemClock_Config(void)
   LL_RCC_HSI_Enable();
 
   /* Wait till HSI is ready */
-  while (LL_RCC_HSI_IsReady() != 1)
-  {
+  while (LL_RCC_HSI_IsReady() != 1) {
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_16, 336, LL_RCC_PLLP_DIV_4);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLLM_DIV_16, 336,
+                              LL_RCC_PLLP_DIV_4);
   LL_RCC_PLL_Enable();
 
   /* Wait till PLL is ready */
-  while (LL_RCC_PLL_IsReady() != 1)
-  {
+  while (LL_RCC_PLL_IsReady() != 1) {
   }
-  while (LL_PWR_IsActiveFlag_VOS() == 0)
-  {
+  while (LL_PWR_IsActiveFlag_VOS() == 0) {
   }
   LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
   LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_2);
@@ -186,14 +218,12 @@ void SystemClock_Config(void)
   LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
 
   /* Wait till System clock is ready */
-  while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL)
-  {
+  while (LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL) {
   }
   LL_SetSystemCoreClock(84000000);
 
   /* Update the time base */
-  if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK)
-  {
+  if (HAL_InitTick(TICK_INT_PRIORITY) != HAL_OK) {
     Error_Handler();
   }
   LL_RCC_SetTIMPrescaler(LL_RCC_TIM_PRESCALER_TWICE);
@@ -204,8 +234,7 @@ void SystemClock_Config(void)
  * @param None
  * @retval None
  */
-static void MX_SPI3_Init(void)
-{
+static void MX_SPI3_Init(void) {
 
   /* USER CODE BEGIN SPI3_Init 0 */
 
@@ -244,7 +273,8 @@ static void MX_SPI3_Init(void)
   /* SPI3_TX Init */
   LL_DMA_SetChannelSelection(DMA1, LL_DMA_STREAM_5, LL_DMA_CHANNEL_0);
 
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_5, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_STREAM_5,
+                                  LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
   LL_DMA_SetStreamPriorityLevel(DMA1, LL_DMA_STREAM_5, LL_DMA_PRIORITY_MEDIUM);
 
@@ -261,7 +291,8 @@ static void MX_SPI3_Init(void)
   LL_DMA_DisableFifoMode(DMA1, LL_DMA_STREAM_5);
 
   /* SPI3 interrupt Init */
-  NVIC_SetPriority(SPI3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+  NVIC_SetPriority(SPI3_IRQn,
+                   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
   NVIC_EnableIRQ(SPI3_IRQn);
 
   /* USER CODE BEGIN SPI3_Init 1 */
@@ -290,8 +321,7 @@ static void MX_SPI3_Init(void)
  * @param None
  * @retval None
  */
-static void MX_TIM10_Init(void)
-{
+static void MX_TIM10_Init(void) {
 
   /* USER CODE BEGIN TIM10_Init 0 */
 
@@ -306,7 +336,8 @@ static void MX_TIM10_Init(void)
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM10);
 
   /* TIM10 interrupt Init */
-  NVIC_SetPriority(TIM1_UP_TIM10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+  NVIC_SetPriority(TIM1_UP_TIM10_IRQn,
+                   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
   NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn);
 
   /* USER CODE BEGIN TIM10_Init 1 */
@@ -347,8 +378,7 @@ static void MX_TIM10_Init(void)
  * @param None
  * @retval None
  */
-static void MX_USART2_UART_Init(void)
-{
+static void MX_USART2_UART_Init(void) {
 
   /* USER CODE BEGIN USART2_Init 0 */
 
@@ -395,8 +425,7 @@ static void MX_USART2_UART_Init(void)
 /**
  * Enable DMA controller clock
  */
-static void MX_DMA_Init(void)
-{
+static void MX_DMA_Init(void) {
 
   /* Init with LL driver */
   /* DMA controller clock enable */
@@ -404,7 +433,8 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream5_IRQn interrupt configuration */
-  NVIC_SetPriority(DMA1_Stream5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
+  NVIC_SetPriority(DMA1_Stream5_IRQn,
+                   NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 5, 0));
   NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 }
 
@@ -413,8 +443,7 @@ static void MX_DMA_Init(void)
  * @param None
  * @retval None
  */
-static void MX_GPIO_Init(void)
-{
+static void MX_GPIO_Init(void) {
   LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
@@ -491,13 +520,10 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void LVGLTimer(void *argument)
-{
-  for (;;)
-  {
+void LVGLTimer(void *argument) {
+  for (;;) {
     lv_timer_handler();
-    vTaskDelay(20);
-    printf("Hello World!\r\n");
+    vTaskDelay(pdMS_TO_TICKS(20));
   }
 }
 
@@ -510,12 +536,10 @@ void LVGLTimer(void *argument)
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const *argument)
-{
+void StartDefaultTask(void const *argument) {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for (;;)
-  {
+  for (;;) {
     osDelay(1);
   }
   /* USER CODE END 5 */
@@ -529,13 +553,11 @@ void StartDefaultTask(void const *argument)
  * @param  htim : TIM handle
  * @retval None
  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM2)
-  {
+  if (htim->Instance == TIM2) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -547,13 +569,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -565,11 +585,11 @@ void Error_Handler(void)
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* User can add his own implementation to report the file name and line
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
+     line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
