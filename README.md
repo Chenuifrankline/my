@@ -14,12 +14,12 @@ Echtzeitsysteme Gruppenprojekt von Gruppe F:
 - [2. VSCode setup](#2-vscode-setup)
 - [3. CMake Setup](#3-cmake-setup)
   - [3.1. 2. Modify `CMakeLists.txt`](#31-2-modify-cmakeliststxt)
-    - [3.1.1. a. Add LVGL as a submodule](#311-a-add-lvgl-as-a-submodule)
-    - [Exclude default source configuration](#exclude-default-source-configuration)
-    - [3.1.2. b. Automatically add all project source files](#312-b-automatically-add-all-project-source-files)
-    - [3.1.3. c. Add sources to the executable](#313-c-add-sources-to-the-executable)
-    - [3.1.4. d. Add include paths:](#314-d-add-include-paths)
-    - [3.1.5. e. Link LVGL to the project:](#315-e-link-lvgl-to-the-project)
+    - [3.1.1. Add LVGL as a submodule](#311-add-lvgl-as-a-submodule)
+    - [3.1.2. Exclude default source configuration](#312-exclude-default-source-configuration)
+    - [3.1.3. Automatically add all project source files](#313-automatically-add-all-project-source-files)
+    - [3.1.4. Add sources to the executable](#314-add-sources-to-the-executable)
+    - [3.1.5. Add include paths:](#315-add-include-paths)
+    - [3.1.6. Link LVGL to the project:](#316-link-lvgl-to-the-project)
 
 
 
@@ -60,21 +60,21 @@ This is just a step by step tutorial in case something breaks.
 
 ###  3.1. <a name='ModifyCMakeLists.txt'></a>2. Modify `CMakeLists.txt`
 
-####  3.1.1. <a name='a.AddLVGLasasubmodule'></a>a. Add LVGL as a submodule
+####  3.1.1. <a name='a.AddLVGLasasubmodule'></a>Add LVGL as a submodule
 Add the following snippet to the CMakeList:
 ```cmake
 # Add LVGL source files 
 add_subdirectory(Drivers/lvgl)
 ```
 
-#### Exclude default source configuration
+#### 3.1.2. Exclude default source configuration
 Add the following snippet to the CMakeList:
 ```cmake
 # Do not auto add folders
 set(MX_Application_Src "" CACHE INTERNAL "")
 ```
 
-####  3.1.2. <a name='b.Automaticallyaddallprojectsourcefiles'></a>b. Automatically add all project source files
+####  3.1.3. <a name='b.Automaticallyaddallprojectsourcefiles'></a>Automatically add all project source files
 Add the following snippet to the CMakeList:
 ```cmake
 # Gather all sources in core/src and lvgl
@@ -88,7 +88,7 @@ file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
 list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/system_stm32f4xx\\.c$")
 ```
 
-####  3.1.3. <a name='c.Addsourcestotheexecutable'></a>c. Add sources to the executable
+####  3.1.4. <a name='c.Addsourcestotheexecutable'></a>Add sources to the executable
 Find and modify the CMakeList section `Add sources to executable` to look like this:
 ```cmake
 # Add sources to executable
@@ -98,7 +98,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 )
 ```
 
-####  3.1.4. <a name='d.Addincludepaths:'></a>d. Add include paths:
+####  3.1.5. <a name='d.Addincludepaths:'></a>Add include paths:
 Find and modify the CMakeList section `Add include paths` to look like this:
 ```cmake
 # Add include paths
@@ -109,7 +109,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 ```
 
-####  3.1.5. <a name='e.LinkLVGLtotheproject:'></a>e. Link LVGL to the project:
+####  3.1.6. <a name='e.LinkLVGLtotheproject:'></a>Link LVGL to the project:
 Find and modify the CMakeList section `Add linked libraries` to look like this:
 ```cmake 
 # Add linked libraries
