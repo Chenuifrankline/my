@@ -15,6 +15,7 @@ Echtzeitsysteme Gruppenprojekt von Gruppe F:
 - [3. CMake Setup](#3-cmake-setup)
   - [3.1. 2. Modify `CMakeLists.txt`](#31-2-modify-cmakeliststxt)
     - [3.1.1. a. Add LVGL as a submodule](#311-a-add-lvgl-as-a-submodule)
+    - [Exclude default source configuration](#exclude-default-source-configuration)
     - [3.1.2. b. Automatically add all project source files](#312-b-automatically-add-all-project-source-files)
     - [3.1.3. c. Add sources to the executable](#313-c-add-sources-to-the-executable)
     - [3.1.4. d. Add include paths:](#314-d-add-include-paths)
@@ -66,13 +67,21 @@ Add the following snippet to the CMakeList:
 add_subdirectory(Drivers/lvgl)
 ```
 
+#### Exclude default source configuration
+Add the following snippet to the CMakeList:
+```cmake
+# Do not auto add folders
+set(MX_Application_Src "" CACHE INTERNAL "")
+```
+
 ####  3.1.2. <a name='b.Automaticallyaddallprojectsourcefiles'></a>b. Automatically add all project source files
 Add the following snippet to the CMakeList:
 ```cmake
-# Gather all sources in core/src
+# Gather all sources in core/src and lvgl
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lvgl/src/*.c
 )
 
 # Exclude the auto-generated system file
