@@ -18,8 +18,8 @@
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f4xx_it.h"
 #include "main.h"
+#include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "./src/tick/lv_tick.h"
@@ -61,15 +61,18 @@ extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
 
+extern bool push;
+
 /* USER CODE END EV */
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
- * @brief This function handles Non maskable interrupt.
- */
-void NMI_Handler(void) {
+  * @brief This function handles Non maskable interrupt.
+  */
+void NMI_Handler(void)
+{
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
@@ -80,61 +83,70 @@ void NMI_Handler(void) {
 }
 
 /**
- * @brief This function handles Hard fault interrupt.
- */
-void HardFault_Handler(void) {
+  * @brief This function handles Hard fault interrupt.
+  */
+void HardFault_Handler(void)
+{
   /* USER CODE BEGIN HardFault_IRQn 0 */
 
   /* USER CODE END HardFault_IRQn 0 */
-  while (1) {
+  while (1)
+  {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
 
 /**
- * @brief This function handles Memory management fault.
- */
-void MemManage_Handler(void) {
+  * @brief This function handles Memory management fault.
+  */
+void MemManage_Handler(void)
+{
   /* USER CODE BEGIN MemoryManagement_IRQn 0 */
 
   /* USER CODE END MemoryManagement_IRQn 0 */
-  while (1) {
+  while (1)
+  {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
 
 /**
- * @brief This function handles Pre-fetch fault, memory access fault.
- */
-void BusFault_Handler(void) {
+  * @brief This function handles Pre-fetch fault, memory access fault.
+  */
+void BusFault_Handler(void)
+{
   /* USER CODE BEGIN BusFault_IRQn 0 */
 
   /* USER CODE END BusFault_IRQn 0 */
-  while (1) {
+  while (1)
+  {
     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
     /* USER CODE END W1_BusFault_IRQn 0 */
   }
 }
 
 /**
- * @brief This function handles Undefined instruction or illegal state.
- */
-void UsageFault_Handler(void) {
+  * @brief This function handles Undefined instruction or illegal state.
+  */
+void UsageFault_Handler(void)
+{
   /* USER CODE BEGIN UsageFault_IRQn 0 */
 
   /* USER CODE END UsageFault_IRQn 0 */
-  while (1) {
+  while (1)
+  {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
 
 /**
- * @brief This function handles Debug monitor.
- */
-void DebugMon_Handler(void) {
+  * @brief This function handles Debug monitor.
+  */
+void DebugMon_Handler(void)
+{
   /* USER CODE BEGIN DebugMonitor_IRQn 0 */
 
   /* USER CODE END DebugMonitor_IRQn 0 */
@@ -151,9 +163,10 @@ void DebugMon_Handler(void) {
 /******************************************************************************/
 
 /**
- * @brief This function handles DMA1 stream5 global interrupt.
- */
-void DMA1_Stream5_IRQHandler(void) {
+  * @brief This function handles DMA1 stream5 global interrupt.
+  */
+void DMA1_Stream5_IRQHandler(void)
+{
   /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
   if (LL_DMA_IsActiveFlag_TC5(DMA1)) {
     lcd_dma_transfer_complete_cb();
@@ -170,10 +183,30 @@ void DMA1_Stream5_IRQHandler(void) {
 }
 
 /**
- * @brief This function handles TIM1 update interrupt and TIM10 global
- * interrupt.
- */
-void TIM1_UP_TIM10_IRQHandler(void) {
+  * @brief This function handles EXTI line[9:5] interrupts.
+  */
+void EXTI9_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+    push= true;
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_8) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_8);
+    /* USER CODE BEGIN LL_EXTI_LINE_8 */
+
+    /* USER CODE END LL_EXTI_LINE_8 */
+  }
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+
+  /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+  */
+void TIM1_UP_TIM10_IRQHandler(void)
+{
   /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
 
   /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
@@ -183,9 +216,10 @@ void TIM1_UP_TIM10_IRQHandler(void) {
 }
 
 /**
- * @brief This function handles TIM2 global interrupt.
- */
-void TIM2_IRQHandler(void) {
+  * @brief This function handles TIM2 global interrupt.
+  */
+void TIM2_IRQHandler(void)
+{
   /* USER CODE BEGIN TIM2_IRQn 0 */
 
   /* USER CODE END TIM2_IRQn 0 */
@@ -197,9 +231,30 @@ void TIM2_IRQHandler(void) {
 }
 
 /**
- * @brief This function handles SPI3 global interrupt.
- */
-void SPI3_IRQHandler(void) {
+  * @brief This function handles EXTI line[15:10] interrupts.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_13) != RESET)
+  {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_13);
+    /* USER CODE BEGIN LL_EXTI_LINE_13 */
+
+    /* USER CODE END LL_EXTI_LINE_13 */
+  }
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI3 global interrupt.
+  */
+void SPI3_IRQHandler(void)
+{
   /* USER CODE BEGIN SPI3_IRQn 0 */
 
   /* USER CODE END SPI3_IRQn 0 */
