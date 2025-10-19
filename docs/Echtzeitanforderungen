@@ -1,5 +1,0 @@
-Wenn der Drehencoder gedrückt wird (NOT-AUS), muss die Motorsteuerung innerhalb von 1ms aufhören, den Motor anzusteuern.
-> Wegen des FreeRTOS-Scheduling wird die Task für die Motorsteuerung mindestens alle 1 ms ausgeführt und kann aufhören den Motor anzusteuern. Das Druchlaufen der Task dauert zusätzlich ca. ~y Takte, diese Zeit muss auch noch einberechnet werden.
-
-Wenn der Drehregler bewegt wurde, um einen Parameter zu verändern, sollte das Display nach maximal 300ms eine Veränderung anzeigen.
-> Der Mensch nimmt Nutzeroberflächen typischerweise bis zu einer Reaktionszeit von 300ms als flüssig war.

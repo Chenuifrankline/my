@@ -87,35 +87,31 @@ void EncoderTask(void *args){
 }
 
 void LCDTask(void *args) {
+    // Initialize LCD
+    lcd_init(SPI3, DMA1, LL_DMA_STREAM_5, TIM10, 100);
+    lcd_setBacklight(100);
 
-  lcd_init(SPI3, DMA1, LL_DMA_STREAM_5, TIM10, 100);
-  lcd_setBacklight(100);
+    // Get active screen
+    lv_obj_t *scr = lv_screen_active();
 
-  lv_obj_t *obj;
+    // Set initial screen background
+    lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_100, 0);
 
-  /* set screen background to white */
-  lv_obj_t *scr = lv_screen_active();
-  lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
-  lv_obj_set_style_bg_opa(scr, LV_OPA_100, 0);
+    for (;;) {
+        // Map encoderPosition to RGB color
+        uint8_t r = (encoderPosition * 5) % 256;
+        uint8_t g = (encoderPosition * 3) % 256;
+        uint8_t b = (encoderPosition * 7) % 256;
 
-  /* create label */
-  obj = lv_label_create(scr);
-  lv_obj_set_align(obj, LV_ALIGN_CENTER);
-  lv_obj_set_height(obj, LV_SIZE_CONTENT);
-  lv_obj_set_width(obj, LV_SIZE_CONTENT);
-  lv_obj_set_style_text_font(obj, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(obj, lv_color_black(), 0);
-  lv_label_set_text(obj, "Welcome");
-  
-  for (;;) {
-    char display[10];
-    snprintf(display, sizeof(display), "%d", encoderPosition);
-    lv_label_set_text(obj, display);
+        lv_color_t color = lv_color_make(r, g, b);
+        lv_obj_set_style_bg_color(scr, color, 0);
 
-    lv_timer_handler();
-    vTaskDelay(pdMS_TO_TICKS(20));
-  }
+        lv_timer_handler();
+        vTaskDelay(pdMS_TO_TICKS(20));
+    }
 }
+
 
 /* USER CODE END 0 */
 
