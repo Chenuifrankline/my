@@ -86,6 +86,32 @@ void EncoderTask(void *args){
   }
 }
 
+/*void LCDTask(void *args) {
+    // Initialize LCD
+    lcd_init(SPI3, DMA1, LL_DMA_STREAM_5, TIM10, 100);
+    lcd_setBacklight(100);
+
+    // Get active screen
+    lv_obj_t *scr = lv_screen_active();
+
+    // Set initial screen background
+    lv_obj_set_style_bg_color(scr, lv_color_white(), 0);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_100, 0);
+
+    for (;;) {
+        // Map encoderPosition to RGB color
+        uint8_t r = (encoderPosition * 5) % 256;
+        uint8_t g = (encoderPosition * 3) % 256;
+        uint8_t b = (encoderPosition * 7) % 256;
+
+        lv_color_t color = lv_color_make(r, g, b);
+        lv_obj_set_style_bg_color(scr, color, 0);
+
+        lv_timer_handler();
+        vTaskDelay(pdMS_TO_TICKS(20));
+    }
+}*/
+
 void LCDTask(void *args) {
 
   lcd_init(SPI3, DMA1, LL_DMA_STREAM_5, TIM10, 100);
