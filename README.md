@@ -1,121 +1,181 @@
-<!-- omit in toc -->
-# Echtzeitsysteme
+# STM32F4 LCD + Encoder System
 
-Echtzeitsysteme Gruppenprojekt von Gruppe F: 
-- Jannis Pinkert
-- Felix Jung
-- Henri Arnold Totue Tagne
+**Echtzeitsysteme Gruppenprojekt von Gruppe M**
 
-<!-- omit in toc -->
-## Table of Contents
+## Team Members
 
-- [1. Pinout](#1-pinout)
-  - [1.1. ST7735 - LCD](#11-st7735---lcd)
-- [2. VSCode setup](#2-vscode-setup)
-- [3. CMake Setup](#3-cmake-setup)
-  - [3.1. 2. Modify `CMakeLists.txt`](#31-2-modify-cmakeliststxt)
-    - [3.1.1. Add LVGL as a submodule](#311-add-lvgl-as-a-submodule)
-    - [3.1.2. Exclude default source configuration](#312-exclude-default-source-configuration)
-    - [3.1.3. Automatically add all project source files](#313-automatically-add-all-project-source-files)
-    - [3.1.4. Add sources to the executable](#314-add-sources-to-the-executable)
-    - [3.1.5. Add include paths:](#315-add-include-paths)
-    - [3.1.6. Link LVGL to the project:](#316-link-lvgl-to-the-project)
+- **Nico Hilmer** 
+- **Frankline Chenui** 
+---
 
+## 📋 Table of Contents
 
+- [Project Overview](#project-overview)
+- [Hardware Components](#hardware-components)
+- [Pinout](#pinout)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [VSCode Setup](#vscode-setup)
+- [Building the Project](#building-the-project)
+- [System Architecture](#system-architecture)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
 
+---
 
+## 🎯 Project Overview
 
-##  1. <a name='Pinout'></a>Pinout
+This project implements a real-time embedded system using an STM32F446RE microcontroller with:
+- **Rotary Encoder**: Controls color selection through rotation
+- **ST7735 LCD Display**: Displays 12 different colors based on encoder position
+- **FreeRTOS**: Multi-tasking real-time operating system
+- **LVGL**: Graphics library for the display
 
-###  1.1. <a name='ST7735-LCD'></a>ST7735 - LCD
-
-| PIN  | Function  | Description      |
-| :--- | :-------- | :--------------- |
-| PB8  | LCD_BLK   | LCD Backlight    |
-| PC1  | LCD_MOSI  | LCD SPI MOSI     |
-| PC10 | LCD_SCK   | LCD Clock        |
-| PC11 | LCD_RESET | LCD Reset        |
-| PC12 | LCD_DC    | LCD Data/Command |
-| PC12 | LCD_CS    | LCD ChipSelect   |
+The system creates an interactive color picker where rotating the encoder changes the display color in real-time.
 
 
-##  2. <a name='VSCodesetup'></a>VSCode setup
+## 📌 Pinout
 
-Follow these steps to setup the Stm32 project in VSCode.
+### Rotary Encoder Connections
 
-1. Install the [STM32CubeCLT](https://www.st.com/en/development-tools/stm32cubeclt.html?icmp=tt38569_gl_lnkon_apr2024) (Command-Line Tools)
-2. Install the [STM32CubeIDE for VSCode](https://marketplace.visualstudio.com/items?itemName=stmicroelectronics.stm32-vscode-extension) extension
-3. Clone and initialize the project via:
-```bash 
-git clone --recurse-submodules https://gitlab-fi.ostfalia.de/id705251/ezs-2025-f.git
+| Encoder Pin | STM32 Pin | Function | Description |
+|-------------|-----------|----------|-------------|
+| **A** | **PB6** | TIM4_CH1 | Encoder channel A |
+| **B** | **PB7** | TIM4_CH2 | Encoder channel B |
+| **SW** | **PC8** | GPIO Input | Push button (with pull-down) |
+| **VCC** | **3.3V** | Power | Encoder power supply |
+| **GND** | **GND** | Ground | Common ground |
+
+### ST7735 LCD Connections
+
+| LCD Pin | STM32 Pin | Function | Description |
+|---------|-----------|----------|-------------|
+| **MOSI** | **PC1** | SPI3_MOSI | SPI data line |
+| **SCK** | **PC10** | SPI3_SCK | SPI clock line |
+| **CS** | **PD2** | GPIO Output | Chip select (active low) |
+| **DC** | **PC12** | GPIO Output | Data/Command control |
+| **RESET** | **PC11** | GPIO Output | LCD reset pin |
+| **VCC** | **3.3V** | Power | LCD power supply |
+| **GND** | **GND** | Ground | Common ground |
+| **Backlight** | **PB8** | TIM10_CH1 | PWM backlight control (optional) |
+
+#
+
+## ✨ Features
+
+- **Real-time Color Selection**: Rotate encoder to cycle through 12 distinct colors
+- **Color Name Display**: Shows color name briefly after rotation
+- **Smooth Transitions**: 50Hz display update rate for smooth color changes
+- **Wrap-around**: Encoder position wraps from 0 to 1000 seamlessly
+- **Debouncing**: Noise filtering for stable encoder readings
+- **FreeRTOS Multi-tasking**: Separate tasks for encoder and display
+- **Debug Output**: Serial debug messages via USART2
+
+
+### Prerequisites
+
+- **STM32CubeCLT** (Command-Line Tools) - [Download](https://www.st.com/en/development-tools/stm32cubeclt.html)
+- **VSCode** with STM32 extension
+- **Git** with submodule support
+- **Hardware**: STM32F446RE development board, ST7735 LCD, rotary encoder
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone --recurse-submodules https://gitlab-fi.ostfalia.de/id120794/ezs-2025-m.git
+   cd ezs-2025-m
+   ```
+
+2. **Open in VSCode**:
+   - Open VSCode
+   - Go to `File > Open Folder`
+   - Select the project directory
+
+
+
+## 🏗️ System Architecture
+
+### Software Architecture
+
 ```
-4. Open the project in VSCode via `File > Open Folder`.
-5. In the STM32Cube tab, select import project. Leave everything as is and confirm import.
-
-
-## 3. CMake Setup
-
-CMake has already been configured in this project.
-This is just a step by step tutorial in case something breaks.
-
-###  3.1. <a name='ModifyCMakeLists.txt'></a>2. Modify `CMakeLists.txt`
-
-####  3.1.1. <a name='a.AddLVGLasasubmodule'></a>Add LVGL as a submodule
-Add the following snippet to the CMakeList:
-```cmake
-# Add LVGL source files 
-add_subdirectory(Drivers/lvgl)
+┌─────────────────────────────────────────┐
+│          FreeRTOS Scheduler             │
+├─────────────────────────────────────────┤
+│                                         │
+│  ┌──────────────┐    ┌──────────────┐  │
+│  │ encoder_task │    │ display_task │  │
+│  │  (Priority 2)│    │  (Priority 3)│  │
+│  └──────┬───────┘    └──────┬───────┘  │
+│         │                   │          │
+│         │ encoderPosition    │          │
+│         │ (shared variable)  │          │
+│         └──────────┬─────────┘          │
+│                    │                    │
+└────────────────────┼────────────────────┘
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+    ┌────▼────┐            ┌─────▼────┐
+    │  TIM4   │            │  SPI3    │
+    │ Encoder │            │  LCD     │
+    │ Hardware│            │ Hardware │
+    └─────────┘            └─────────┘
 ```
 
-#### 3.1.2. Exclude default source configuration
-Add the following snippet to the CMakeList:
-```cmake
-# Do not auto add folders
-set(MX_Application_Src "" CACHE INTERNAL "")
-```
+### Task Responsibilities
 
-####  3.1.3. <a name='b.Automaticallyaddallprojectsourcefiles'></a>Automatically add all project source files
-Add the following snippet to the CMakeList:
-```cmake
-# Gather all sources in core/src and lvgl
-file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/lvgl/src/*.c
-)
+**encoder_task** (Runs every 50ms):
+- Reads TIM4 counter (encoder hardware)
+- Calculates position delta
+- Updates `encoderPosition` (0-1000)
+- Handles wrap-around
 
-# Exclude the auto-generated system file
-list(FILTER CORE_SOURCES EXCLUDE REGEX ".*/system_stm32f4xx\\.c$")
-```
+**display_task** (Runs every 20ms):
+- Reads `encoderPosition`
+- Converts position to color (0-1000 → 12 colors)
+- Updates LCD display
+- Shows color name for 600ms
 
-####  3.1.4. <a name='c.Addsourcestotheexecutable'></a>Add sources to the executable
-Find and modify the CMakeList section `Add sources to executable` to look like this:
-```cmake
-# Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
-    ${CORE_SOURCES}
-)
-```
+### Key Variables
 
-####  3.1.5. <a name='d.Addincludepaths:'></a>Add include paths:
-Find and modify the CMakeList section `Add include paths` to look like this:
-```cmake
-# Add include paths
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
-    Drivers/lvgl
-    Core/Inc
-)
-```
+- **`encoderPosition`**: Shared variable (0-1000) connecting encoder to display
+- **`raw_value`**: Raw TIM4 counter value (0-65535)
+- **`delta`**: Change in encoder position since last reading
 
-####  3.1.6. <a name='e.LinkLVGLtotheproject:'></a>Link LVGL to the project:
-Find and modify the CMakeList section `Add linked libraries` to look like this:
-```cmake 
-# Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    stm32cubemx
-    # Add user defined libraries
-    lvgl
-)
-```
+
+## 🔍 Troubleshooting
+
+### Display Issues
+
+**Problem**: Display shows nothing
+- **Solution**: Check SPI connections (PC1, PC10)
+- Verify CS (PD2) is connected
+- Check LCD power supply (3.3V)
+- Verify backlight is connected (PB8)
+
+**Problem**: Colors not changing
+- **Solution**: Check encoder is updating `encoderPosition`
+- Verify display_task is running (check serial output)
+- Check SPI communication
+
+
+
+
+
+## 📚 Additional Resources
+
+- [STM32F446RE Datasheet](https://www.st.com/resource/en/datasheet/stm32f446re.pdf)
+- [ST7735 Datasheet](https://www.displayfuture.com/pdf/ST7735.pdf)
+- [FreeRTOS Documentation](https://www.freertos.org/Documentation/RTOS_book.html)
+- [LVGL Documentation](https://docs.lvgl.io/)
+
+
+## 👥 Credits
+
+**Gruppe M** - Echtzeitsysteme Project
+- Nico Hilmer
+- Frankline Chenui
+

@@ -10,9 +10,9 @@
 
 /* Define your limits and initial count */
 #define ENCODER_MIN_COUNT 0
-#define ENCODER_MAX_COUNT 1000
-#define ENCODER_INITIAL_COUNT 0     // Start at 0 instead of 500
-#define ENCODER_SENSITIVITY 50     // Reduced from 200 to 50
+#define ENCODER_MAX_COUNT 1000  /* Match display expectation (0-1000 for 12-color palette) */
+#define ENCODER_INITIAL_COUNT 0
+#define ENCODER_SENSITIVITY 5
 
 /* External variable updated in the task */
 extern uint32_t encoderPosition;
@@ -22,29 +22,28 @@ extern uint32_t encoderPosition;
  * @return Current encoder count within defined limits
  */
 uint32_t encoder_get_position(void) {
-    static uint32_t lastRaw = 0;  // Start from 0
+    static uint32_t lastRaw = 0;
+    static uint8_t initialized = 0;
     uint32_t raw_value = LL_TIM_GetCounter(ENCODER_TIMER);
-    int32_t delta;
 
-    /* Calculate delta (handles 16-bit wrap-around automatically) */
-    delta = (int32_t)((int16_t)(raw_value - lastRaw));
+    if (!initialized) {
+        lastRaw = raw_value;
+        initialized = 1;
+        return encoderPosition;
+    }
 
-    /* Apply sensitivity multiplier for mechanical encoders */
+    int32_t delta = (int32_t)((int16_t)(raw_value - lastRaw));
     delta *= ENCODER_SENSITIVITY;
 
-    /* Update position with delta */
+    int32_t range = (ENCODER_MAX_COUNT - ENCODER_MIN_COUNT + 1);
     int32_t newPosition = (int32_t)encoderPosition + delta;
 
-    /* Clamp to limits */
-    if (newPosition < ENCODER_MIN_COUNT) {
-        newPosition = ENCODER_MIN_COUNT;
-    } else if (newPosition > ENCODER_MAX_COUNT) {
-        newPosition = ENCODER_MAX_COUNT;
-    }
+    /* Wrap-around within [MIN, MAX] */
+    while (newPosition < ENCODER_MIN_COUNT) newPosition += range;
+    while (newPosition > ENCODER_MAX_COUNT) newPosition -= range;
 
     lastRaw = raw_value;
 
-    /* Debug output */
     if (newPosition != (int32_t)encoderPosition) {
         printf("Raw: %lu, Delta: %ld, NewPos: %ld\r\n", raw_value, delta, newPosition);
     }
